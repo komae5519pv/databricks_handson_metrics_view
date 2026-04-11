@@ -31,7 +31,7 @@
 
 # DBTITLE 1,変数設定
 catalog_name = "komae_demo_v4"          # 任意のカタログ名に変更してください
-schema_name = "drugstore_kpi_"           # 任意のスキーマ名に変更してください
+schema_name = "drugstore_kpi"           # 任意のスキーマ名に変更してください
 
 # COMMAND ----------
 
