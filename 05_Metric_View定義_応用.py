@@ -107,8 +107,7 @@ measures:
       - 売上
       - revenue
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0
@@ -119,6 +118,11 @@ measures:
     synonyms:
       - 客数
       - customers
+    format:
+      type: number
+      decimal_places:
+        type: exact
+        places: 0
   - name: 客単価
     expr: "MEASURE(`売上合計`) / MEASURE(`客数合計`)"
     display_name: 客単価
@@ -127,8 +131,7 @@ measures:
       - average spend
       - 一人当たり売上
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0
@@ -140,8 +143,7 @@ measures:
       - 坪単価
       - sales per tsubo
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0
@@ -248,8 +250,7 @@ measures:
       - 売上
       - revenue
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0
@@ -257,13 +258,17 @@ measures:
     expr: SUM(source.customer_count)
     display_name: 客数合計
     comment: 来店客数の合計
+    format:
+      type: number
+      decimal_places:
+        type: exact
+        places: 0
   - name: 客単価
     expr: "MEASURE(`売上合計`) / MEASURE(`客数合計`)"
     display_name: 客単価
     comment: 1人あたりの平均売上金額
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0
@@ -272,8 +277,7 @@ measures:
     display_name: 坪効率（円/坪）
     comment: 坪あたりの売上金額
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0

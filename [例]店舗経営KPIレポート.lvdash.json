@@ -73,6 +73,90 @@
         "ORDER BY\n",
         "  `売上月`"
       ]
+    },
+    {
+      "name": "6aadbaf8",
+      "displayName": "drugstore_kpi_metrics (Forecasted)",
+      "queryLines": [
+        "WITH original_table AS (\n",
+        "  SELECT\n",
+        "    DATE_TRUNC(\"MONTH\", `売上月`) AS ts,\n",
+        "    MEASURE(`売上合計`) AS val\n",
+        "  FROM\n",
+        "    komae_demo_v4.drugstore_kpi.drugstore_kpi_metrics\n",
+        "  GROUP BY\n",
+        "    1\n",
+        "),\n",
+        "dates AS (\n",
+        "  SELECT\n",
+        "    MAX(ts) AS max_date_column,\n",
+        "    MIN(ts) AS min_date_column,\n",
+        "    MAX_BY(val, ts) AS val\n",
+        "  FROM\n",
+        "    original_table\n",
+        "),\n",
+        "forecast_table AS (\n",
+        "  SELECT\n",
+        "    ts,\n",
+        "    val_forecast,\n",
+        "    val_upper,\n",
+        "    val_lower,\n",
+        "    NULL AS val\n",
+        "  FROM\n",
+        "    AI_FORECAST(\n",
+        "      TABLE(original_table),\n",
+        "      horizon =>\n",
+        "        (\n",
+        "          SELECT\n",
+        "            max_date_column\n",
+        "              + MAKE_DT_INTERVAL(\n",
+        "                CAST(FLOOR(DATEDIFF(max_date_column, min_date_column) * 0.5) AS INT),\n",
+        "                0,\n",
+        "                0,\n",
+        "                0\n",
+        "              )\n",
+        "          FROM\n",
+        "            dates\n",
+        "        ),\n",
+        "      time_col => 'ts',\n",
+        "      value_col => 'val'\n",
+        "    )\n",
+        ")\n",
+        "SELECT\n",
+        "  ts AS `売上月`,\n",
+        "  val_forecast AS `売上合計_forecast`,\n",
+        "  val_upper AS `売上合計_upper`,\n",
+        "  val_lower AS `売上合計_lower`,\n",
+        "  val AS `売上合計`\n",
+        "FROM\n",
+        "  forecast_table\n",
+        "UNION ALL\n",
+        "SELECT\n",
+        "  ts AS `売上月`,\n",
+        "  NULL AS `売上合計_forecast`,\n",
+        "  NULL AS `売上合計_upper`,\n",
+        "  NULL AS `売上合計_lower`,\n",
+        "  val AS `売上合計`\n",
+        "FROM\n",
+        "  original_table\n",
+        "WHERE\n",
+        "  ts\n",
+        "    < (\n",
+        "      SELECT\n",
+        "        max_date_column\n",
+        "      FROM\n",
+        "        dates\n",
+        "    )\n",
+        "UNION ALL\n",
+        "SELECT\n",
+        "  max_date_column AS `売上月`,\n",
+        "  val AS `売上合計_forecast`,\n",
+        "  val AS `売上合計_upper`,\n",
+        "  val AS `売上合計_lower`,\n",
+        "  val AS `売上合計`\n",
+        "FROM\n",
+        "  dates"
+      ]
     }
   ],
   "pages": [
@@ -131,7 +215,7 @@
             "spec": {
               "version": 2,
               "frame": {
-                "title": "売上合計",
+                "title": "売上合計（前月比較）",
                 "showTitle": true
               },
               "widgetType": "counter",
@@ -232,7 +316,7 @@
             "spec": {
               "version": 2,
               "frame": {
-                "title": "客数合計",
+                "title": "客数合計（前月比較）",
                 "showTitle": true
               },
               "widgetType": "counter",
@@ -332,7 +416,7 @@
             "spec": {
               "version": 2,
               "frame": {
-                "title": "客単価",
+                "title": "客単価（前月比較）",
                 "showTitle": true
               },
               "widgetType": "counter",
@@ -433,7 +517,7 @@
             "spec": {
               "version": 2,
               "frame": {
-                "title": "食品構成比",
+                "title": "食品構成比（前月比較）",
                 "showTitle": true
               },
               "widgetType": "counter",
@@ -654,44 +738,75 @@
         },
         {
           "widget": {
-            "name": "getsuji-urage-suii-3kagetsu-yosoku",
+            "name": "205c3831",
             "queries": [
               {
                 "name": "main_query",
                 "query": {
-                  "datasetName": "a681c50c",
+                  "datasetName": "6aadbaf8",
                   "fields": [
                     {
-                      "name": "monthly(売上月)",
-                      "expression": "DATE_TRUNC(\"MONTH\", `売上月`)"
+                      "name": "売上月",
+                      "expression": "`売上月`"
                     },
                     {
-                      "name": "measure(売上合計)",
-                      "expression": "MEASURE(`売上合計`)"
+                      "name": "売上合計",
+                      "expression": "`売上合計`"
+                    },
+                    {
+                      "name": "売上合計_forecast",
+                      "expression": "`売上合計_forecast`"
+                    },
+                    {
+                      "name": "売上合計_upper",
+                      "expression": "`売上合計_upper`"
+                    },
+                    {
+                      "name": "売上合計_lower",
+                      "expression": "`売上合計_lower`"
                     }
                   ],
-                  "disaggregated": false
+                  "disaggregated": true
                 }
               }
             ],
             "spec": {
-              "version": 3,
+              "version": 1,
               "frame": {
                 "showTitle": true,
                 "title": "月次売上推移（+3ヶ月予測）"
               },
-              "widgetType": "line",
+              "widgetType": "forecast-line",
               "encodings": {
                 "x": {
-                  "fieldName": "monthly(売上月)",
+                  "fieldName": "売上月",
+                  "displayName": "売上月",
                   "scale": {
                     "type": "temporal"
                   }
                 },
                 "y": {
-                  "fieldName": "measure(売上合計)",
                   "scale": {
                     "type": "quantitative"
+                  },
+                  "original": {
+                    "fieldName": "売上合計",
+                    "displayName": "売上合計"
+                  },
+                  "prediction": {
+                    "fieldName": "売上合計_forecast",
+                    "displayName": "売上合計_forecast"
+                  },
+                  "predictionUpper": {
+                    "fieldName": "売上合計_upper",
+                    "displayName": "売上合計_upper"
+                  },
+                  "predictionLower": {
+                    "fieldName": "売上合計_lower",
+                    "displayName": "売上合計_lower"
+                  },
+                  "axis": {
+                    "title": "売上合計"
                   }
                 }
               }
@@ -1254,7 +1369,39 @@
   ],
   "uiSettings": {
     "theme": {
-      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+      "canvasBackgroundColor": {
+        "light": "#F6FAFB",
+        "dark": "#1B1F23"
+      },
+      "widgetBackgroundColor": {
+        "light": "#FFFFFF",
+        "dark": "#2A2F35"
+      },
+      "widgetBorderColor": {
+        "light": "#D7E1E9",
+        "dark": "#3C444C"
+      },
+      "fontColor": {
+        "light": "#374151",
+        "dark": "#E4E9EE"
+      },
+      "selectionColor": {
+        "light": "#5FA8D3",
+        "dark": "#5FA8D3"
+      },
+      "visualizationColors": [
+        "#5FA8D3",
+        "#70BEE1",
+        "#89CCE7",
+        "#A1DAEC",
+        "#B3E6DC",
+        "#89C7A8",
+        "#6EAD80",
+        "#589F60",
+        "#478743",
+        "#356C2A"
+      ],
+      "widgetHeaderAlignment": "LEFT"
     },
     "genieSpace": {
       "isEnabled": true,

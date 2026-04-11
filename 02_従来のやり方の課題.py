@@ -1,8 +1,4 @@
 # Databricks notebook source
-
-
-# COMMAND ----------
-
 # MAGIC %md-sandbox
 # MAGIC
 # MAGIC <div style="background: linear-gradient(135deg, #1B3139 0%, #2D4A54 100%); padding: 24px 32px; border-radius: 12px; margin-bottom: 24px;">

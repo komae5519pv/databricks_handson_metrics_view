@@ -42,7 +42,7 @@
 # MAGIC   <tbody>
 # MAGIC     <tr style="background:#fff;"><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;font-family:monospace;">stores</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;">店舗マスタ</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;text-align:right;">50</td></tr>
 # MAGIC     <tr style="background:#F8F9FA;"><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;font-family:monospace;">categories</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;">カテゴリマスタ</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;text-align:right;">7</td></tr>
-# MAGIC     <tr style="background:#fff;"><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;font-family:monospace;">sales_daily</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;">日別売上</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;text-align:right;">~36,500</td></tr>
+# MAGIC     <tr style="background:#fff;"><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;font-family:monospace;">sales_daily</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;">日別売上</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;text-align:right;">~91,000</td></tr>
 # MAGIC     <tr style="background:#F8F9FA;"><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;font-family:monospace;">sales_by_category</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;">カテゴリ別月次売上</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;text-align:right;">~8,400</td></tr>
 # MAGIC     <tr style="background:#fff;"><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;font-family:monospace;">prescription_monthly</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;">調剤月次実績</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;text-align:right;">~720</td></tr>
 # MAGIC     <tr style="background:#F8F9FA;"><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;font-family:monospace;">members</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;">会員マスタ</td><td style="padding:8px 16px;border-bottom:1px solid #E0E0E0;text-align:right;">100,000</td></tr>
@@ -140,7 +140,7 @@ for i, (pref, city, region, lat, lon) in enumerate(regions_data):
         open_year = 2025
         open_date = f"2025-{random.randint(1,6):02d}-01"
     else:
-        open_year = random.randint(2005, 2023)
+        open_year = random.randint(2005, 2020)
         open_date = f"{open_year}-{random.randint(1,12):02d}-01"
     store_type = random.choice(store_types)
     has_pharmacy = random.random() < 0.6  # 60% に調剤併設
@@ -219,8 +219,8 @@ display(spark.table("categories"))
 
 df_stores_pd = df_stores.toPandas()
 
-# 2年間の日付リスト
-start_date = datetime(2024, 1, 1)
+# 5年間の日付リスト（2021-2025）→ 予測がリアルになる
+start_date = datetime(2021, 1, 1)
 end_date = datetime(2025, 12, 31)
 dates = []
 d = start_date
@@ -241,10 +241,12 @@ for _, store in df_stores_pd.iterrows():
     if has_rx:
         base_daily = int(base_daily * 1.15)  # 調剤併設は+15%
 
-    annual_trend = random.uniform(-0.08, 0.06)
+    # 業界全体: 年3-5%の緩やかな成長（ドラッグストア業界の実態に近い）
+    annual_growth = random.uniform(0.03, 0.05)
+    # 一部の店舗は低迷（15%の確率）
     is_struggling = random.random() < 0.15
     if is_struggling:
-        annual_trend = random.uniform(-0.15, -0.05)
+        annual_growth = random.uniform(-0.03, 0.01)
 
     # 新店は開店日以降のみデータ生成
     store_open_date = store['open_date'].strftime("%Y-%m-%d") if hasattr(store['open_date'], 'strftime') else str(store['open_date'])
@@ -255,28 +257,36 @@ for _, store in df_stores_pd.iterrows():
         month_num = int(date_str.split("-")[1])
         dow = datetime.strptime(date_str, "%Y-%m-%d").weekday()  # 0=Mon
 
-        # 年次トレンド
-        trend = 1 + (annual_trend * day_idx / 365)
+        # 年次成長トレンド（5年間で安定的に成長）
+        years_elapsed = day_idx / 365.0
+        trend = (1 + annual_growth) ** years_elapsed
 
-        # 季節変動（冬:インフル, 春:花粉, 夏:日焼け止め）
-        if month_num in [1, 2, 12]:
-            seasonal = random.uniform(1.05, 1.15)
-        elif month_num in [3, 4]:
-            seasonal = random.uniform(1.03, 1.10)
-        elif month_num in [7, 8]:
-            seasonal = random.uniform(1.00, 1.08)
-        else:
-            seasonal = random.uniform(0.90, 1.00)
+        # 季節変動（ドラッグストアの明確な季節パターン）
+        seasonal_map = {
+            1: 1.12,   # 冬: インフルエンザ、風邪薬
+            2: 1.10,   # 冬: 花粉症の始まり
+            3: 1.15,   # 春: 花粉症ピーク、新生活
+            4: 1.05,   # 春: 新生活
+            5: 0.98,   # 端境期
+            6: 0.95,   # 梅雨: 来店減
+            7: 1.03,   # 夏: 日焼け止め、制汗剤
+            8: 1.05,   # 夏: 帰省需要
+            9: 0.93,   # 端境期
+            10: 0.95,  # 秋
+            11: 0.97,  # 秋
+            12: 1.08,  # 年末: まとめ買い
+        }
+        seasonal = seasonal_map[month_num] * random.uniform(0.97, 1.03)
 
-        # 曜日変動（土日は1.3倍、月曜は低め）
+        # 曜日変動（土日は来客増、月曜は少ない）
         if dow >= 5:
-            dow_factor = random.uniform(1.20, 1.40)
+            dow_factor = random.uniform(1.20, 1.35)
         elif dow == 0:
             dow_factor = random.uniform(0.85, 0.95)
         else:
             dow_factor = random.uniform(0.95, 1.05)
 
-        noise = random.uniform(0.90, 1.10)
+        noise = random.uniform(0.93, 1.07)
         sales_amount = int(base_daily * trend * seasonal * dow_factor * noise)
         customer_count = int(sales_amount / random.randint(1200, 2800))
         receipt_count = int(customer_count * random.uniform(0.85, 1.0))
@@ -307,14 +317,16 @@ display(spark.table("sales_daily").orderBy("store_id", "sales_date").limit(20))
 
 # COMMAND ----------
 
-# 月リスト
+# 月リスト（5年間: 2021-2025）
 months = []
-m = datetime(2024, 1, 1)
-for i in range(24):
+m = datetime(2021, 1, 1)
+for i in range(60):  # 5年 = 60ヶ月
     months.append((m + relativedelta(months=i)).strftime("%Y-%m-01"))
 
 cat_ids = [c[0] for c in categories_data]
 cat_ratios = [c[2] for c in categories_data]
+# カテゴリインデックス: CAT05=食品・飲料 は index 4
+FOOD_IDX = 4
 
 sales_by_cat_data = []
 for _, store in df_stores_pd.iterrows():
@@ -323,28 +335,43 @@ for _, store in df_stores_pd.iterrows():
 
     # 店舗ごとのカテゴリ偏り
     store_hash = hash(store_id) % 100
-    adjusted = []
+    base_adjusted = []
     for i, r in enumerate(cat_ratios):
         adj = r * (1 + ((store_hash + i * 13) % 40 - 20) / 100)
         if cat_ids[i] == "CAT02" and not has_rx:
             adj = 0  # 調剤非併設は調剤売上なし
-        adjusted.append(adj)
-    total_w = sum(adjusted)
-    normalized = [w / total_w for w in adjusted]
+        base_adjusted.append(adj)
 
     # 新店は開店月以降のみ
     store_open_str = store['open_date'].strftime("%Y-%m-01") if hasattr(store['open_date'], 'strftime') else str(store['open_date'])[:7] + "-01"
 
-    for month_str in months:
+    for month_idx, month_str in enumerate(months):
         if month_str < store_open_str:
             continue
         month_num = int(month_str.split("-")[1])
-        # 月次売上の概算
-        base_monthly = store['size_sqm'] / 3.3 * random.randint(8000, 18000) * 30
-        seasonal = 1.1 if month_num in [1, 2, 3, 12] else 1.0
+        year_num = int(month_str.split("-")[0])
+
+        # 食品構成比の年次上昇トレンド（フード&ドラッグ戦略）
+        # 2021年を基準に、食品は年+2%pt ずつ構成比が上昇
+        years_from_base = (year_num - 2021) + (month_num - 1) / 12.0
+        food_boost = 1 + (years_from_base * 0.08)  # 5年で約40%増
+
+        adjusted = list(base_adjusted)
+        adjusted[FOOD_IDX] = adjusted[FOOD_IDX] * food_boost
+        total_w = sum(adjusted)
+        normalized = [w / total_w for w in adjusted]
+
+        # 月次売上の概算（年次成長トレンド付き）
+        growth_factor = (1 + 0.04) ** years_from_base  # 年4%成長
+        base_monthly = store['size_sqm'] / 3.3 * random.randint(8000, 18000) * 30 * growth_factor
+
+        # 季節変動
+        seasonal_map = {1: 1.12, 2: 1.10, 3: 1.15, 4: 1.05, 5: 0.98, 6: 0.95,
+                        7: 1.03, 8: 1.05, 9: 0.93, 10: 0.95, 11: 0.97, 12: 1.08}
+        seasonal = seasonal_map[month_num]
 
         for cat_id, weight in zip(cat_ids, normalized):
-            cat_sales = int(base_monthly * weight * seasonal * random.uniform(0.85, 1.15))
+            cat_sales = int(base_monthly * weight * seasonal * random.uniform(0.90, 1.10))
             if cat_sales > 0:
                 sales_by_cat_data.append((store_id, cat_id, month_str, cat_sales))
 
@@ -381,9 +408,16 @@ for store in rx_stores:
         if month_str < store_open_str:
             continue
         month_num = int(month_str.split("-")[1])
-        # 処方箋枚数（月1000-3000枚）
-        base_scripts = random.randint(1000, 3000)
-        seasonal = 1.15 if month_num in [1, 2, 3, 12] else 1.0  # 冬場は増
+        year_num = int(month_str.split("-")[0])
+
+        # 処方箋枚数（月1000-3000枚、年次で微増トレンド）
+        years_from_base = (year_num - 2021) + (month_num - 1) / 12.0
+        rx_growth = (1 + 0.03) ** years_from_base  # 年3%増（高齢化）
+        base_scripts = int(random.randint(1000, 3000) * rx_growth)
+
+        seasonal_map = {1: 1.15, 2: 1.12, 3: 1.10, 4: 1.02, 5: 0.98, 6: 0.95,
+                        7: 0.97, 8: 0.98, 9: 0.96, 10: 1.00, 11: 1.03, 12: 1.08}
+        seasonal = seasonal_map[month_num]
         scripts = int(base_scripts * seasonal * random.uniform(0.90, 1.10))
 
         # 処方箋単価（技術料込み8000-12000円）
@@ -556,9 +590,9 @@ print("=" * 50)
 # MAGIC -- テーブルコメント
 # MAGIC COMMENT ON TABLE stores IS 'ドラッグストア店舗マスタ。全店舗の基本情報（所在地、売場面積、店舗タイプ、調剤併設有無、駐車場台数）を管理';
 # MAGIC COMMENT ON TABLE categories IS 'カテゴリマスタ。医薬品/調剤/化粧品/日用品/食品/サプリ/介護の7カテゴリを定義。売上構成比と粗利率を保持';
-# MAGIC COMMENT ON TABLE sales_daily IS '日別売上。店舗ごとの日次売上実績（売上金額、客数、レシート枚数）。2024年1月〜2025年12月の2年分';
+# MAGIC COMMENT ON TABLE sales_daily IS '日別売上。店舗ごとの日次売上実績（売上金額、客数、レシート枚数）。2021年1月〜2025年12月の5年分';
 # MAGIC COMMENT ON TABLE sales_by_category IS 'カテゴリ別月次売上。店舗×カテゴリ×月ごとの売上金額';
-# MAGIC COMMENT ON TABLE prescription_monthly IS '調剤月次実績。調剤併設店の処方箋枚数、調剤売上、技術料。2024年1月〜2025年12月';
+# MAGIC COMMENT ON TABLE prescription_monthly IS '調剤月次実績。調剤併設店の処方箋枚数、調剤売上、技術料。2021年1月〜2025年12月';
 # MAGIC COMMENT ON TABLE members IS '会員マスタ。ポイントカード会員の年代、性別、会員ランク、所属店舗';
 # MAGIC COMMENT ON TABLE member_visits IS '会員来店月次サマリ。会員ごとの月別来店回数と購入金額';
 

@@ -85,6 +85,7 @@
 # MAGIC     S4["categories<br/>（カテゴリマスタ）"]
 # MAGIC   end
 # MAGIC   MV["Metric View<br/>統一KPI定義<br/>（セマンティックレイヤー）"]
+# MAGIC   MSG["利用者は<br/>統一されたKPI定義をクエリし<br/>一貫した数字を取得"]
 # MAGIC   subgraph Consumers["利用者"]
 # MAGIC     direction TB
 # MAGIC     C1["Dashboard<br/>経営帳票"]
@@ -95,12 +96,14 @@
 # MAGIC   S2 --> MV
 # MAGIC   S3 --> MV
 # MAGIC   S4 --> MV
-# MAGIC   MV --> C1
-# MAGIC   MV --> C2
-# MAGIC   MV --> C3
+# MAGIC   MV --> MSG
+# MAGIC   MSG --> C1
+# MAGIC   MSG --> C2
+# MAGIC   MSG --> C3
 # MAGIC   style Sources fill:#e3f2fd,stroke:#1B5162,stroke-width:2px
 # MAGIC   style Consumers fill:#EEF2F7,stroke:#64748B,stroke-width:1.25px
 # MAGIC   style MV fill:#FFFFFF,stroke:#FF3621,stroke-width:2px
+# MAGIC   style MSG fill:#FFFFFF,stroke:#FF3621,stroke-width:1px
 # MAGIC </div>
 # MAGIC
 # MAGIC <script type="module">
@@ -305,7 +308,7 @@
 # MAGIC <code>
 # MAGIC version: 1.1
 # MAGIC source: komae_demo_v4.drugstore_kpi.sales_daily
-# MAGIC filter: sales_date >= '2024-01-01'
+# MAGIC filter: sales_date >= '2021-01-01'
 # MAGIC
 # MAGIC dimensions:
 # MAGIC   - name: 売上日
@@ -383,6 +386,11 @@
 # MAGIC       - 来店者数
 # MAGIC       - total customers
 # MAGIC       - customer count
+# MAGIC     format:
+# MAGIC       type: number
+# MAGIC       decimal_places:
+# MAGIC         type: exact
+# MAGIC         places: 0
 # MAGIC   - name: レシート枚数合計
 # MAGIC     expr: SUM(receipt_count)
 # MAGIC     comment: レシート枚数の合計
@@ -392,6 +400,11 @@
 # MAGIC       - 会計数
 # MAGIC       - total receipts
 # MAGIC       - receipt count
+# MAGIC     format:
+# MAGIC       type: number
+# MAGIC       decimal_places:
+# MAGIC         type: exact
+# MAGIC         places: 0
 # MAGIC   - name: 客単価_客数ベース
 # MAGIC     expr: MEASURE(`売上合計`) / MEASURE(`客数合計`)
 # MAGIC     comment: 売上合計を客数合計で割った1人あたりの平均売上金額
@@ -470,7 +483,7 @@ CREATE OR REPLACE VIEW drugstore_kpi_metrics WITH METRICS LANGUAGE YAML AS
 $$
 version: 1.1
 source: {catalog_name}.{schema_name}.sales_daily
-filter: sales_date >= '2024-01-01'
+filter: sales_date >= '2021-01-01'
 
 dimensions:
   - name: 売上日
@@ -548,6 +561,11 @@ measures:
       - 来店者数
       - total customers
       - customer count
+    format:
+      type: number
+      decimal_places:
+        type: exact
+        places: 0
   - name: レシート枚数合計
     expr: SUM(receipt_count)
     comment: レシート枚数の合計
@@ -557,6 +575,11 @@ measures:
       - 会計数
       - total receipts
       - receipt count
+    format:
+      type: number
+      decimal_places:
+        type: exact
+        places: 0
   - name: 客単価_客数ベース
     expr: MEASURE(`売上合計`) / MEASURE(`客数合計`)
     comment: 売上合計を客数合計で割った1人あたりの平均売上金額
@@ -858,8 +881,7 @@ $$
 # MAGIC       - 売上合計
 # MAGIC       - sales amount
 # MAGIC     format:
-# MAGIC       type: currency
-# MAGIC       currency_code: JPY
+# MAGIC       type: number
 # MAGIC       decimal_places:
 # MAGIC         type: exact
 # MAGIC         places: 0
@@ -872,8 +894,7 @@ $$
 # MAGIC       - dispensing sales
 # MAGIC       - 調剤
 # MAGIC     format:
-# MAGIC       type: currency
-# MAGIC       currency_code: JPY
+# MAGIC       type: number
 # MAGIC       decimal_places:
 # MAGIC         type: exact
 # MAGIC         places: 0
@@ -887,8 +908,7 @@ $$
 # MAGIC       - merchandise sales
 # MAGIC       - 物販
 # MAGIC     format:
-# MAGIC       type: currency
-# MAGIC       currency_code: JPY
+# MAGIC       type: number
 # MAGIC       decimal_places:
 # MAGIC         type: exact
 # MAGIC         places: 0
@@ -902,8 +922,7 @@ $$
 # MAGIC       - 食品
 # MAGIC       - 食品・飲料売上
 # MAGIC     format:
-# MAGIC       type: currency
-# MAGIC       currency_code: JPY
+# MAGIC       type: number
 # MAGIC       decimal_places:
 # MAGIC         type: exact
 # MAGIC         places: 0
@@ -1043,8 +1062,7 @@ measures:
       - 売上合計
       - sales amount
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0
@@ -1057,8 +1075,7 @@ measures:
       - dispensing sales
       - 調剤
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0
@@ -1072,8 +1089,7 @@ measures:
       - merchandise sales
       - 物販
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0
@@ -1087,8 +1103,7 @@ measures:
       - 食品
       - 食品・飲料売上
     format:
-      type: currency
-      currency_code: JPY
+      type: number
       decimal_places:
         type: exact
         places: 0

@@ -40,7 +40,7 @@
 # MAGIC   `売上月`,
 # MAGIC   MEASURE(`売上合計`),
 # MAGIC   MEASURE(`客数合計`),
-# MAGIC   MEASURE(`客単価`)
+# MAGIC   MEASURE(`客単価_客数ベース`)
 # MAGIC FROM drugstore_kpi_metrics
 # MAGIC GROUP BY ALL
 # MAGIC ORDER BY `売上月`
@@ -75,7 +75,7 @@
 # MAGIC   `曜日`,
 # MAGIC   MEASURE(`売上合計`),
 # MAGIC   MEASURE(`客数合計`),
-# MAGIC   MEASURE(`客単価`)
+# MAGIC   MEASURE(`客単価_客数ベース`)
 # MAGIC FROM drugstore_kpi_metrics
 # MAGIC GROUP BY ALL
 # MAGIC ORDER BY MEASURE(`売上合計`) DESC
