@@ -1,0 +1,1266 @@
+{
+  "datasets": [
+    {
+      "name": "a681c50c",
+      "displayName": "drugstore_kpi_metrics",
+      "asset_name": "komae_demo_v4.drugstore_kpi.drugstore_kpi_metrics"
+    },
+    {
+      "name": "0639d685",
+      "displayName": "drugstore_store_metrics",
+      "asset_name": "komae_demo_v4.drugstore_kpi.drugstore_store_metrics"
+    },
+    {
+      "name": "kpi_mom",
+      "displayName": "基本KPI月次比較",
+      "queryLines": [
+        "WITH monthly AS (\n",
+        "  SELECT\n",
+        "    `売上月`,\n",
+        "    MEASURE(`売上合計`) AS `売上合計`,\n",
+        "    MEASURE(`客数合計`) AS `客数合計`,\n",
+        "    MEASURE(`客単価_客数ベース`) AS `客単価`\n",
+        "  FROM\n",
+        "    komae_demo_v4.drugstore_kpi.drugstore_kpi_metrics\n",
+        "  GROUP BY\n",
+        "    `売上月`\n",
+        ")\n",
+        "SELECT\n",
+        "  `売上月`,\n",
+        "  `売上合計`,\n",
+        "  `客数合計`,\n",
+        "  `客単価`,\n",
+        "  LAG(`売上合計`) OVER (ORDER BY `売上月`) AS `前月売上`,\n",
+        "  LAG(`客数合計`) OVER (ORDER BY `売上月`) AS `前月客数`,\n",
+        "  LAG(`客単価`) OVER (ORDER BY `売上月`) AS `前月客単価`\n",
+        "FROM\n",
+        "  monthly"
+      ]
+    },
+    {
+      "name": "food_ratio_mom",
+      "displayName": "食品構成比月次比較",
+      "queryLines": [
+        "WITH monthly AS (\n",
+        "  SELECT\n",
+        "    `売上月`,\n",
+        "    MEASURE(`食品構成比`) AS `食品構成比`\n",
+        "  FROM\n",
+        "    komae_demo_v4.drugstore_kpi.drugstore_store_metrics\n",
+        "  GROUP BY\n",
+        "    `売上月`\n",
+        ")\n",
+        "SELECT\n",
+        "  `売上月`,\n",
+        "  `食品構成比`,\n",
+        "  LAG(`食品構成比`) OVER (ORDER BY `売上月`) AS `前月食品構成比`\n",
+        "FROM\n",
+        "  monthly"
+      ]
+    },
+    {
+      "name": "pharmacy_retail_monthly",
+      "displayName": "調剤vs物販月次推移",
+      "queryLines": [
+        "SELECT\n",
+        "  `売上月`,\n",
+        "  MEASURE(`調剤売上`) AS `調剤売上`,\n",
+        "  MEASURE(`物販売上`) AS `物販売上`\n",
+        "FROM\n",
+        "  komae_demo_v4.drugstore_kpi.drugstore_store_metrics\n",
+        "GROUP BY\n",
+        "  `売上月`\n",
+        "ORDER BY\n",
+        "  `売上月`"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "df7eee8c",
+      "displayName": "全社サマリ",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## 📊 ドラッグストア 経営KPIダッシュボード ― 全社サマリ"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_sales",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_mom",
+                  "fields": [
+                    {
+                      "name": "売上月",
+                      "expression": "`売上月`"
+                    },
+                    {
+                      "name": "前月売上",
+                      "expression": "`前月売上`"
+                    },
+                    {
+                      "name": "売上合計",
+                      "expression": "`売上合計`"
+                    }
+                  ],
+                  "disaggregated": true,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "`売上月`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "売上合計",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "売上合計",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "JPY",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "売上合計"
+                },
+                "target": {
+                  "fieldName": "前月売上",
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#3BD16F"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": "<"
+                        },
+                        "color": "#E92828"
+                      }
+                    ]
+                  },
+                  "change": {
+                    "type": "percent"
+                  },
+                  "period": {
+                    "type": "relative-to-value-period",
+                    "offset": -1
+                  },
+                  "displayName": "前月売上"
+                },
+                "period": {
+                  "fieldName": "売上月"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_customers",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_mom",
+                  "fields": [
+                    {
+                      "name": "売上月",
+                      "expression": "`売上月`"
+                    },
+                    {
+                      "name": "前月客数",
+                      "expression": "`前月客数`"
+                    },
+                    {
+                      "name": "客数合計",
+                      "expression": "`客数合計`"
+                    }
+                  ],
+                  "disaggregated": true,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "`売上月`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "客数合計",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "客数合計",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "客数合計"
+                },
+                "target": {
+                  "fieldName": "前月客数",
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#3BD16F"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": "<"
+                        },
+                        "color": "#E92828"
+                      }
+                    ]
+                  },
+                  "change": {
+                    "type": "percent"
+                  },
+                  "period": {
+                    "type": "relative-to-value-period",
+                    "offset": -1
+                  },
+                  "displayName": "前月客数"
+                },
+                "period": {
+                  "fieldName": "売上月"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_spend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_mom",
+                  "fields": [
+                    {
+                      "name": "売上月",
+                      "expression": "`売上月`"
+                    },
+                    {
+                      "name": "前月客単価",
+                      "expression": "`前月客単価`"
+                    },
+                    {
+                      "name": "客単価",
+                      "expression": "`客単価`"
+                    }
+                  ],
+                  "disaggregated": true,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "`売上月`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "客単価",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "客単価",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "JPY",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "客単価"
+                },
+                "target": {
+                  "fieldName": "前月客単価",
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#3BD16F"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": "<"
+                        },
+                        "color": "#E92828"
+                      }
+                    ]
+                  },
+                  "change": {
+                    "type": "percent"
+                  },
+                  "period": {
+                    "type": "relative-to-value-period",
+                    "offset": -1
+                  },
+                  "displayName": "前月客単価"
+                },
+                "period": {
+                  "fieldName": "売上月"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_food_ratio",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "food_ratio_mom",
+                  "fields": [
+                    {
+                      "name": "売上月",
+                      "expression": "`売上月`"
+                    },
+                    {
+                      "name": "前月食品構成比",
+                      "expression": "`前月食品構成比`"
+                    },
+                    {
+                      "name": "食品構成比",
+                      "expression": "`食品構成比`"
+                    }
+                  ],
+                  "disaggregated": true,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "`売上月`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "食品構成比",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "食品構成比",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "displayName": "食品構成比"
+                },
+                "target": {
+                  "fieldName": "前月食品構成比",
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#3BD16F"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": "<"
+                        },
+                        "color": "#E92828"
+                      }
+                    ]
+                  },
+                  "change": {
+                    "type": "percent"
+                  },
+                  "period": {
+                    "type": "relative-to-value-period",
+                    "offset": -1
+                  },
+                  "displayName": "前月食品構成比"
+                },
+                "period": {
+                  "fieldName": "売上月"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "category_sales_pie",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0639d685",
+                  "fields": [
+                    {
+                      "name": "measure(カテゴリ別売上)",
+                      "expression": "MEASURE(`カテゴリ別売上`)"
+                    },
+                    {
+                      "name": "カテゴリ名",
+                      "expression": "`カテゴリ名`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "カテゴリ別売上構成",
+                "showTitle": true
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "measure(カテゴリ別売上)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "JPY",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "カテゴリ別売上"
+                },
+                "color": {
+                  "fieldName": "カテゴリ名",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "カテゴリ名",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 4,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "region_sales_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0639d685",
+                  "fields": [
+                    {
+                      "name": "カテゴリ名",
+                      "expression": "`カテゴリ名`"
+                    },
+                    {
+                      "name": "地域",
+                      "expression": "`地域`"
+                    },
+                    {
+                      "name": "measure(カテゴリ別売上)",
+                      "expression": "MEASURE(`カテゴリ別売上`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "地域別売上",
+                "showTitle": true
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "地域",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "地域",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(カテゴリ別売上)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "JPY",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "カテゴリ別売上",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "カテゴリ名",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "カテゴリ名",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 12,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "getsuji-urage-suii-3kagetsu-yosoku",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a681c50c",
+                  "fields": [
+                    {
+                      "name": "monthly(売上月)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `売上月`)"
+                    },
+                    {
+                      "name": "measure(売上合計)",
+                      "expression": "MEASURE(`売上合計`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "月次売上推移（+3ヶ月予測）"
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(売上月)",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(売上合計)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 6,
+            "height": 7
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "store_performance",
+      "displayName": "店舗パフォーマンス",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## 🏠 店舗パフォーマンス"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "store_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0639d685",
+                  "fields": [
+                    {
+                      "name": "店舗名",
+                      "expression": "`店舗名`"
+                    },
+                    {
+                      "name": "地域",
+                      "expression": "`地域`"
+                    },
+                    {
+                      "name": "店舗タイプ",
+                      "expression": "`店舗タイプ`"
+                    },
+                    {
+                      "name": "調剤の有無",
+                      "expression": "`調剤の有無`"
+                    },
+                    {
+                      "name": "measure(カテゴリ別売上)",
+                      "expression": "MEASURE(`カテゴリ別売上`)"
+                    },
+                    {
+                      "name": "measure(物販売上)",
+                      "expression": "MEASURE(`物販売上`)"
+                    },
+                    {
+                      "name": "measure(調剤売上)",
+                      "expression": "MEASURE(`調剤売上`)"
+                    },
+                    {
+                      "name": "measure(食品構成比)",
+                      "expression": "MEASURE(`食品構成比`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "店舗別KPI一覧",
+                "showTitle": true
+              },
+              "rowsPerPage": 25,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "店舗名",
+                    "displayName": "店舗名"
+                  },
+                  {
+                    "fieldName": "地域",
+                    "displayName": "地域"
+                  },
+                  {
+                    "fieldName": "店舗タイプ",
+                    "displayName": "店舗タイプ"
+                  },
+                  {
+                    "fieldName": "調剤の有無",
+                    "displayName": "調剤の有無"
+                  },
+                  {
+                    "fieldName": "measure(カテゴリ別売上)",
+                    "displayName": "売上合計"
+                  },
+                  {
+                    "fieldName": "measure(物販売上)",
+                    "displayName": "物販売上"
+                  },
+                  {
+                    "fieldName": "measure(調剤売上)",
+                    "displayName": "調剤売上"
+                  },
+                  {
+                    "fieldName": "measure(食品構成比)",
+                    "displayName": "食品構成比"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 12,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "pharmacy_comparison",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0639d685",
+                  "fields": [
+                    {
+                      "name": "カテゴリ名",
+                      "expression": "`カテゴリ名`"
+                    },
+                    {
+                      "name": "調剤の有無",
+                      "expression": "`調剤の有無`"
+                    },
+                    {
+                      "name": "measure(カテゴリ別売上)",
+                      "expression": "MEASURE(`カテゴリ別売上`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "調剤有無別売上比較",
+                "showTitle": true
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "調剤の有無",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "調剤の有無",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(カテゴリ別売上)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "JPY",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "カテゴリ別売上",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "カテゴリ名",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "カテゴリ名",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "store_type_comparison",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0639d685",
+                  "fields": [
+                    {
+                      "name": "カテゴリ名",
+                      "expression": "`カテゴリ名`"
+                    },
+                    {
+                      "name": "店舗タイプ",
+                      "expression": "`店舗タイプ`"
+                    },
+                    {
+                      "name": "measure(カテゴリ別売上)",
+                      "expression": "MEASURE(`カテゴリ別売上`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "店舗タイプ別売上比較",
+                "showTitle": true
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "店舗タイプ",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "店舗タイプ",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(カテゴリ別売上)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "JPY",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "カテゴリ別売上",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "カテゴリ名",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "カテゴリ名",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 7
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "category_analysis",
+      "displayName": "調剤・カテゴリ分析",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## 💊 調剤・カテゴリ分析"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "category_monthly_line",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0639d685",
+                  "fields": [
+                    {
+                      "name": "カテゴリ名",
+                      "expression": "`カテゴリ名`"
+                    },
+                    {
+                      "name": "売上月",
+                      "expression": "`売上月`"
+                    },
+                    {
+                      "name": "measure(カテゴリ別売上)",
+                      "expression": "MEASURE(`カテゴリ別売上`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "カテゴリ別月次売上推移",
+                "showTitle": true
+              },
+              "widgetType": "area",
+              "encodings": {
+                "x": {
+                  "fieldName": "売上月",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "売上月",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(カテゴリ別売上)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "JPY",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "カテゴリ別売上",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "カテゴリ名",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "カテゴリ名",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 12,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "pharmacy_retail_line",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pharmacy_retail_monthly",
+                  "fields": [
+                    {
+                      "name": "売上月",
+                      "expression": "`売上月`"
+                    },
+                    {
+                      "name": "物販売上",
+                      "expression": "`物販売上`"
+                    },
+                    {
+                      "name": "調剤売上",
+                      "expression": "`調剤売上`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "調剤売上 vs 物販売上 月次推移",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "売上月",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "売上月",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "primary": {
+                    "fields": [
+                      {
+                        "fieldName": "物販売上",
+                        "displayName": "物販売上"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    }
+                  },
+                  "secondary": {
+                    "fields": [
+                      {
+                        "fieldName": "調剤売上",
+                        "displayName": "調剤売上"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    }
+                  }
+                },
+                "color": {
+                  "legend": {
+                    "position": "right"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 12,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "food_ratio_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0639d685",
+                  "fields": [
+                    {
+                      "name": "売上月",
+                      "expression": "`売上月`"
+                    },
+                    {
+                      "name": "measure(食品構成比)",
+                      "expression": "MEASURE(`食品構成比`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "食品構成比推移（フード＆ドラッグ戦略）",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "売上月",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "売上月",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(食品構成比)",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "displayName": "食品構成比",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 15,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "genieSpace": {
+      "isEnabled": true,
+      "overrideId": "01f13502ff3c1ab4b823c8dac3c5851a",
+      "enablementMode": "ENABLED"
+    },
+    "applyModeEnabled": false
+  }
+}
