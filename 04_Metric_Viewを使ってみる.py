@@ -4,7 +4,7 @@
 # MAGIC   <div style="display: flex; align-items: center; gap: 15px;">
 # MAGIC     <img src="https://cdn.simpleicons.org/databricks/FF3621" width="40" height="40"/>
 # MAGIC     <div>
-# MAGIC       <h1 style="color: #FFFFFF; margin: 0; font-size: 28px;">UC Business Semantics ハンズオン</h1>
+# MAGIC       <div style="display: flex; align-items: center; gap: 10px;"><h1 style="color: #FFFFFF; margin: 0; font-size: 28px;">UC Business Semantics ハンズオン</h1> <span style="background:#e3f2fd;color:#1565c0;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;">⏱ 15分</span></div>
 # MAGIC       <p style="color: #FFFFFFCC; margin: 5px 0 0 0; font-size: 16px;">Step 4 of 6 — 04. Metric View を使ってみる</p>
 # MAGIC     </div>
 # MAGIC   </div>

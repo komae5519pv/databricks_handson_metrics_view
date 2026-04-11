@@ -5,7 +5,7 @@
 # MAGIC   <div style="display: flex; align-items: center; gap: 16px;">
 # MAGIC     <img src="https://cdn.simpleicons.org/databricks/FF3621" width="40" height="40" alt="Databricks"/>
 # MAGIC     <div>
-# MAGIC       <div style="color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">02. 従来のやり方の課題</div>
+# MAGIC       <div style="display: flex; align-items: center; gap: 10px;"><span style="color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">02. 従来のやり方の課題</span> <span style="background:#e3f2fd;color:#1565c0;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;">⏱ 10分</span></div>
 # MAGIC       <div style="color: rgba(255,255,255,0.75); font-size: 14px; margin-top: 4px;">UC Business Semantics ハンズオン — Step 2 of 6</div>
 # MAGIC     </div>
 # MAGIC   </div>

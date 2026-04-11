@@ -5,6 +5,7 @@
 # MAGIC     <div style="display:flex;align-items:center;gap:10px;">
 # MAGIC       <span style="color:#fff;font-size:22px;font-weight:700;">03. Metric View 定義（基本）</span>
 # MAGIC       <span style="background:#FF3621;color:#fff;padding:3px 12px;border-radius:12px;font-size:11px;font-weight:600;">Public Preview</span>
+# MAGIC       <span style="background:#e3f2fd;color:#1565c0;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;">⏱ 25分</span>
 # MAGIC     </div>
 # MAGIC     <span style="color:rgba(255,255,255,0.7);font-size:13px;">UC Business Semantics ハンズオン — Step 3 of 6</span>
 # MAGIC   </div>
