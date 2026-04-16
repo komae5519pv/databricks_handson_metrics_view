@@ -157,6 +157,63 @@
         "FROM\n",
         "  dates"
       ]
+    },
+    {
+      "name": "89068926",
+      "displayName": "drugstore_store_metrics (Forecasted)",
+      "queryLines": [
+        "WITH original_table AS (\n",
+        "    SELECT \n",
+        "  `売上月` AS 売上月,\n",
+        "  MEASURE(`食品構成比`) AS 食品構成比\n",
+        "FROM komae_demo_v4.drugstore_kpi.drugstore_store_metrics GROUP BY 1\n",
+        "  ),\n",
+        "  dates AS (\n",
+        "    SELECT \n",
+        "      MAX(売上月) AS max_date_column,\n",
+        "      MIN(売上月) AS min_date_column,\n",
+        "      MAX_BY(食品構成比, 売上月) AS 食品構成比\n",
+        "    FROM original_table\n",
+        "  ),\n",
+        "  forecast_table AS (\n",
+        "    SELECT \n",
+        "      売上月,\n",
+        "      食品構成比_forecast,\n",
+        "      食品構成比_upper,\n",
+        "      食品構成比_lower,\n",
+        "      NULL AS 食品構成比\n",
+        "    FROM AI_FORECAST(\n",
+        "      TABLE(original_table),\n",
+        "      horizon => (\n",
+        "        SELECT\n",
+        "          max_date_column + MAKE_DT_INTERVAL(CAST(FLOOR(DATEDIFF(max_date_column, min_date_column) * 0.5) AS INT), 0, 0, 0)\n",
+        "        FROM dates\n",
+        "      ),\n",
+        "      time_col => '売上月',\n",
+        "      value_col => '食品構成比'\n",
+        "    )\n",
+        "  )\n",
+        "\n",
+        "  SELECT * FROM forecast_table\n",
+        "  UNION ALL\n",
+        "  SELECT\n",
+        "    売上月,\n",
+        "    NULL AS 食品構成比_forecast,\n",
+        "    NULL AS 食品構成比_upper,\n",
+        "    NULL AS 食品構成比_lower,\n",
+        "    食品構成比\n",
+        "  FROM original_table\n",
+        "    WHERE 売上月 < (SELECT max_date_column FROM dates)\n",
+        "  UNION ALL\n",
+        "  SELECT\n",
+        "    max_date_column AS 売上月,\n",
+        "    食品構成比 AS 食品構成比_forecast,\n",
+        "    食品構成比 AS 食品構成比_upper,\n",
+        "    食品構成比 AS 食品構成比_lower,\n",
+        "    食品構成比\n",
+        "  FROM\n",
+        "    dates"
+      ]
     }
   ],
   "pages": [
@@ -223,13 +280,15 @@
                 "value": {
                   "fieldName": "売上合計",
                   "format": {
-                    "type": "number-currency",
-                    "currencyCode": "JPY",
+                    "type": "number-plain",
+                    "abbreviation": "none",
                     "decimalPlaces": {
                       "type": "exact",
                       "places": 0
-                    },
-                    "abbreviation": "compact"
+                    }
+                  },
+                  "style": {
+                    "fontSize": 36
                   },
                   "displayName": "売上合計"
                 },
@@ -265,6 +324,14 @@
                   "period": {
                     "type": "relative-to-value-period",
                     "offset": -1
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
                   },
                   "displayName": "前月売上"
                 },
@@ -325,11 +392,11 @@
                   "fieldName": "客数合計",
                   "format": {
                     "type": "number-plain",
+                    "abbreviation": "none",
                     "decimalPlaces": {
                       "type": "exact",
                       "places": 0
-                    },
-                    "abbreviation": "compact"
+                    }
                   },
                   "displayName": "客数合計"
                 },
@@ -365,6 +432,14 @@
                   "period": {
                     "type": "relative-to-value-period",
                     "offset": -1
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
                   },
                   "displayName": "前月客数"
                 },
@@ -424,8 +499,7 @@
                 "value": {
                   "fieldName": "客単価",
                   "format": {
-                    "type": "number-currency",
-                    "currencyCode": "JPY",
+                    "type": "number-plain",
                     "decimalPlaces": {
                       "type": "exact",
                       "places": 0
@@ -466,6 +540,14 @@
                   "period": {
                     "type": "relative-to-value-period",
                     "offset": -1
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
                   },
                   "displayName": "前月客単価"
                 },
@@ -566,6 +648,13 @@
                     "type": "relative-to-value-period",
                     "offset": -1
                   },
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
                   "displayName": "前月食品構成比"
                 },
                 "period": {
@@ -619,11 +708,11 @@
                   "format": {
                     "type": "number-currency",
                     "currencyCode": "JPY",
+                    "abbreviation": "none",
                     "decimalPlaces": {
-                      "type": "exact",
+                      "type": "max",
                       "places": 0
-                    },
-                    "abbreviation": "compact"
+                    }
                   },
                   "displayName": "カテゴリ別売上"
                 },
@@ -664,12 +753,12 @@
                       "expression": "`カテゴリ名`"
                     },
                     {
-                      "name": "地域",
-                      "expression": "`地域`"
-                    },
-                    {
                       "name": "measure(カテゴリ別売上)",
                       "expression": "MEASURE(`カテゴリ別売上`)"
+                    },
+                    {
+                      "name": "地域",
+                      "expression": "`地域`"
                     }
                   ],
                   "disaggregated": false
@@ -705,11 +794,11 @@
                   "format": {
                     "type": "number-currency",
                     "currencyCode": "JPY",
+                    "abbreviation": "none",
                     "decimalPlaces": {
                       "type": "exact",
                       "places": 0
-                    },
-                    "abbreviation": "compact"
+                    }
                   },
                   "displayName": "カテゴリ別売上",
                   "scale": {
@@ -725,7 +814,24 @@
                   "scale": {
                     "type": "categorical"
                   }
-                }
+                },
+                "label": {
+                  "show": false
+                },
+                "extra": [
+                  {
+                    "fieldName": "measure(カテゴリ別売上)",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "JPY",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  }
+                ]
               }
             }
           },
@@ -776,10 +882,30 @@
                 "showTitle": true,
                 "title": "月次売上推移（+3ヶ月予測）"
               },
+              "annotations": [
+                {
+                  "type": "horizontal-line",
+                  "encodings": {
+                    "y": {
+                      "dataValue": "6200000000",
+                      "dataType": "DOUBLE"
+                    }
+                  }
+                }
+              ],
               "widgetType": "forecast-line",
               "encodings": {
                 "x": {
                   "fieldName": "売上月",
+                  "axis": {
+                    "hideGrid": true,
+                    "hideLabels": false
+                  },
+                  "format": {
+                    "type": "date-time",
+                    "date": "year-month-day",
+                    "time": "none"
+                  },
                   "displayName": "売上月",
                   "scale": {
                     "type": "temporal"
@@ -807,6 +933,15 @@
                   },
                   "axis": {
                     "title": "売上合計"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "JPY",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
                   }
                 }
               }
@@ -917,14 +1052,44 @@
                   },
                   {
                     "fieldName": "measure(カテゴリ別売上)",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "JPY",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": true
+                    },
                     "displayName": "売上合計"
                   },
                   {
                     "fieldName": "measure(物販売上)",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "JPY",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": true
+                    },
                     "displayName": "物販売上"
                   },
                   {
                     "fieldName": "measure(調剤売上)",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "JPY",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": true
+                    },
                     "displayName": "調剤売上"
                   },
                   {
@@ -994,11 +1159,11 @@
                   "format": {
                     "type": "number-currency",
                     "currencyCode": "JPY",
+                    "abbreviation": "none",
                     "decimalPlaces": {
                       "type": "exact",
                       "places": 0
-                    },
-                    "abbreviation": "compact"
+                    }
                   },
                   "displayName": "カテゴリ別売上",
                   "scale": {
@@ -1077,11 +1242,11 @@
                   "format": {
                     "type": "number-currency",
                     "currencyCode": "JPY",
+                    "abbreviation": "none",
                     "decimalPlaces": {
                       "type": "exact",
                       "places": 0
-                    },
-                    "abbreviation": "compact"
+                    }
                   },
                   "displayName": "カテゴリ別売上",
                   "scale": {
@@ -1181,11 +1346,11 @@
                   "format": {
                     "type": "number-currency",
                     "currencyCode": "JPY",
+                    "abbreviation": "none",
                     "decimalPlaces": {
                       "type": "exact",
                       "places": 0
-                    },
-                    "abbreviation": "compact"
+                    }
                   },
                   "displayName": "カテゴリ別売上",
                   "scale": {
@@ -1244,6 +1409,49 @@
                 "title": "調剤売上 vs 物販売上 月次推移",
                 "showTitle": true
               },
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "fontColor"
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              },
               "widgetType": "line",
               "encodings": {
                 "x": {
@@ -1266,6 +1474,15 @@
                     ],
                     "scale": {
                       "type": "quantitative"
+                    },
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "JPY",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
                     }
                   },
                   "secondary": {
@@ -1277,6 +1494,15 @@
                     ],
                     "scale": {
                       "type": "quantitative"
+                    },
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "JPY",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 2
+                      }
                     }
                   }
                 },
@@ -1305,6 +1531,10 @@
                   "datasetName": "0639d685",
                   "fields": [
                     {
+                      "name": "measure(カテゴリ別売上)",
+                      "expression": "MEASURE(`カテゴリ別売上`)"
+                    },
+                    {
                       "name": "売上月",
                       "expression": "`売上月`"
                     },
@@ -1323,12 +1553,23 @@
                 "title": "食品構成比推移（フード＆ドラッグ戦略）",
                 "showTitle": true
               },
+              "mark": {
+                "marker": {
+                  "shape": "diamond"
+                }
+              },
               "widgetType": "line",
               "encodings": {
                 "x": {
                   "fieldName": "売上月",
                   "axis": {
-                    "hideTitle": true
+                    "hideTitle": true,
+                    "labelAngle": 90
+                  },
+                  "format": {
+                    "type": "date",
+                    "date": "year-month-day",
+                    "leadingZeros": false
                   },
                   "displayName": "売上月",
                   "scale": {
@@ -1350,8 +1591,22 @@
                   }
                 },
                 "label": {
-                  "show": true
-                }
+                  "show": false
+                },
+                "extra": [
+                  {
+                    "fieldName": "measure(カテゴリ別売上)",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "JPY",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  }
+                ]
               }
             }
           },
