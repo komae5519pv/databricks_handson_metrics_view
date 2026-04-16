@@ -105,24 +105,23 @@
 # MAGIC <summary style="cursor: pointer; font-weight: bold; color: #666; padding: 8px 12px; background: #f5f5f5; border-radius: 6px; border: 1px solid #ddd;">📝 Metric View なしだとこう書く（クリックで展開）</summary>
 # MAGIC <div style="background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 0 0 6px 6px; padding: 15px; margin-top: -1px; font-family: monospace; font-size: 13px; white-space: pre; overflow-x: auto; color: #333;">-- Metric View なしの場合: JOIN + CASE WHEN + FILTER が必要
 # MAGIC SELECT
-# MAGIC   s.region AS 地域,
-# MAGIC   SUM(sc.sales_amount) AS カテゴリ別売上,
+# MAGIC   s.region AS `地域`,
+# MAGIC   SUM(sc.sales_amount) AS `カテゴリ別売上`,
 # MAGIC   SUM(CASE WHEN c.category_name = '調剤'
-# MAGIC            THEN sc.sales_amount ELSE 0 END) AS 調剤売上,
+# MAGIC            THEN sc.sales_amount ELSE 0 END) AS `調剤売上`,
 # MAGIC   SUM(CASE WHEN c.category_name != '調剤'
-# MAGIC            THEN sc.sales_amount ELSE 0 END) AS 物販売上,
-# MAGIC   SUM(CASE WHEN c.category_name = '食品'
+# MAGIC            THEN sc.sales_amount ELSE 0 END) AS `物販売上`,
+# MAGIC   SUM(CASE WHEN c.category_name = '食品・飲料'
 # MAGIC            THEN sc.sales_amount ELSE 0 END)
 # MAGIC   / NULLIF(
 # MAGIC       SUM(CASE WHEN c.category_name != '調剤'
 # MAGIC                THEN sc.sales_amount ELSE 0 END), 0
-# MAGIC     ) AS 食品構成比
+# MAGIC     ) AS `食品構成比`
 # MAGIC FROM sales_by_category sc
 # MAGIC JOIN stores s ON sc.store_id = s.store_id
 # MAGIC JOIN categories c ON sc.category_id = c.category_id
-# MAGIC WHERE sc.sales_month >= '2024-01-01'
 # MAGIC GROUP BY s.region
-# MAGIC ORDER BY カテゴリ別売上 DESC</div>
+# MAGIC ORDER BY `カテゴリ別売上` DESC</div>
 # MAGIC </details>
 # MAGIC
 # MAGIC <div style="background:#e0f2f1;border-left:5px solid #009688;padding:15px 20px;border-radius:6px;margin-bottom:15px;">
